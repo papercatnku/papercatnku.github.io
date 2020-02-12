@@ -2,20 +2,21 @@
   <head>
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Gridea Windows 配置踩坑 | PaperCat&#39;s Blog</title>
+<title>python 文本图像渲染备忘 | PaperCat&#39;s Blog</title>
 <link rel="shortcut icon" href="https://papercatnku.github.io//favicon.ico?v=1581520163014">
 <link href="https://cdn.remixicon.com/releases/v2.1.0/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://papercatnku.github.io//styles/main.css">
-<link rel="alternate" type="application/atom+xml" title="Gridea Windows 配置踩坑 | PaperCat&#39;s Blog - Atom Feed" href="https://papercatnku.github.io//atom.xml">
+<link rel="alternate" type="application/atom+xml" title="python 文本图像渲染备忘 | PaperCat&#39;s Blog - Atom Feed" href="https://papercatnku.github.io//atom.xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
-    <meta name="description" content="基本配置参考
-github pages
+    <meta name="description" content="为了训练出更好的文本识别引擎，最近在重新整理&amp;改善人工文本图像渲染相关的代码。本文记载中间一些值得记下来的tips。
+渲染流程
 
-实测windows 10下 一路默认安装后检测远程连接时一直存在&quot;fatal: No such remote 'origin' &quot;的问题（通过点击 编辑-&gt;开发者工具，并切..." />
-    <meta name="keywords" content="gridea" />
+(随机或固定)指定字体，字体大小等参数并确定按像素计算的待渲染的字符串尺寸，mask等
+随机选取背景图..." />
+    <meta name="keywords" content="" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
     <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
   </head>
@@ -85,35 +86,53 @@ github pages
         <div class="post-detail">
           <article class="post">
             <h2 class="post-title">
-              Gridea Windows 配置踩坑
+              python 文本图像渲染备忘
             </h2>
             <div class="post-info">
               <span>
-                2020-02-06
+                2020-02-12
               </span>
               <span>
-                1 min read
+                2 min read
               </span>
-              
-                <a href="https://papercatnku.github.io/tag/tKLoHPZp5" class="post-tag">
-                  # gridea
-                </a>
               
             </div>
             
             <div class="post-content-wrapper">
               <div class="post-content">
-                <h1 id="基本配置参考">基本配置参考</h1>
-<p><a href="https://gridea.dev/docs/#%E5%8F%91%E5%B8%83">github pages</a></p>
-<h2 id=""></h2>
-<p>实测windows 10下 一路默认安装后检测远程连接时一直存在&quot;fatal: No such remote 'origin' &quot;的问题（通过点击 编辑-&gt;开发者工具，并切换至console后能看到问题提示）<br>
-<a href="https://manjaro.top/post/gridea-da-jian-bo-ke-jian-ce-yuan-cheng-lian-jie-shi-bai-de-jie-jue-fang-an/">检测远程连接失败解决方法</a></p>
+                <p>为了训练出更好的文本识别引擎，最近在重新整理&amp;改善人工文本图像渲染相关的代码。本文记载中间一些值得记下来的tips。</p>
+<h1 id="渲染流程">渲染流程</h1>
+<ul>
+<li>(随机或固定)指定字体，字体大小等参数并确定按像素计算的待渲染的字符串尺寸，mask等</li>
+<li>随机选取背景图片，将根据指定字体的文本渲染结果图像剪贴至背景图片中</li>
+<li>图片施加亮度，随机噪声，透视，随机扭曲扰动等变换(场景文本识别通常只关注灰度图像因此颜色相关变化并不重要)</li>
+</ul>
+<h1 id="font-相关参数说明">Font 相关参数说明</h1>
+<p>为了更好的控制后续透视、随机扭曲，padding等与图像位置相关的变换，渲染得到的文本图像的尺寸相关参数必须要注意。</p>
+<p>注意下图中的offset_y, PIL 的ImageFont api中能直接得到结果图像的高度，但这个高度实测并不准确，很多常见字体(特别是英文类)配置中会额外给上面流出一段空间，也就是offset_y所描述的， offset_x到是通常为0可以忽略掉</p>
+<figure data-type="image" tabindex="1"><img src="https://papercatnku.github.io//post-images/1581520075491.png" alt="" loading="lazy"></figure>
+<p>如下为 可以得到仅包含文本区域的图片的示意代码</p>
+<pre><code>    from PIL import Image, ImageDraw, ImageFont
+    font_fn = './data/fonts/toy/arial.ttf' # any font file path you like
+    temp_txt = 'asdfghjkl'
+    size = 64
+    font = ImageFont.truetype(
+                font=font_fn,
+                size=size,
+                encoding='unic')
+    ascent, descent = font.getmetrics()
+    mask_width, mask_height = font.getsize(text=temp_txt)
+    (width, baseline), (offset_x, offset_y) = font.font.getsize(temp_txt)
+    raw_txt_img = Image.new('RGBA', (mask_width, mask_height-offset_y))
+    draw = ImageDraw.Draw(raw_txt_img)
+    draw.text(xy=(0,-offset_y), text=temp_txt, fill=(255,0,0), font=font)
+    raw_txt_img.save('./test.png')</code></pre>
 
               </div>
               <div class="toc-container">
                 <ul class="markdownIt-TOC">
-<li><a href="#%E5%9F%BA%E6%9C%AC%E9%85%8D%E7%BD%AE%E5%8F%82%E8%80%83">基本配置参考</a><br>
-*</li>
+<li><a href="#%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B">渲染流程</a></li>
+<li><a href="#font-%E7%9B%B8%E5%85%B3%E5%8F%82%E6%95%B0%E8%AF%B4%E6%98%8E">Font 相关参数说明</a></li>
 </ul>
 
               </div>
@@ -121,6 +140,15 @@ github pages
           </article>
         </div>
 
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://papercatnku.github.io/post/gridea-windows-pei-zhi-cai-keng">
+              <h3 class="post-title">
+                Gridea Windows 配置踩坑
+              </h3>
+            </a>
+          </div>
         
 
         

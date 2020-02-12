@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://papercatnku.github.io/</id>
     <title>PaperCat&apos;s Blog</title>
-    <updated>2020-02-06T13:12:48.158Z</updated>
+    <updated>2020-02-12T15:09:30.080Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://papercatnku.github.io/"/>
     <link rel="self" href="https://papercatnku.github.io/atom.xml"/>
@@ -10,6 +10,41 @@
     <logo>https://papercatnku.github.io/images/avatar.png</logo>
     <icon>https://papercatnku.github.io/favicon.ico</icon>
     <rights>All rights reserved 2020, PaperCat&apos;s Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[python 文本图像渲染备忘]]></title>
+        <id>https://papercatnku.github.io/post/python-wen-ben-tu-xiang-xuan-ran-bei-wang</id>
+        <link href="https://papercatnku.github.io/post/python-wen-ben-tu-xiang-xuan-ran-bei-wang">
+        </link>
+        <updated>2020-02-12T08:09:49.000Z</updated>
+        <content type="html"><![CDATA[<p>为了训练出更好的文本识别引擎，最近在重新整理&amp;改善人工文本图像渲染相关的代码。本文记载中间一些值得记下来的tips。</p>
+<h1 id="渲染流程">渲染流程</h1>
+<ul>
+<li>(随机或固定)指定字体，字体大小等参数并确定按像素计算的待渲染的字符串尺寸，mask等</li>
+<li>随机选取背景图片，将根据指定字体的文本渲染结果图像剪贴至背景图片中</li>
+<li>图片施加亮度，随机噪声，透视，随机扭曲扰动等变换(场景文本识别通常只关注灰度图像因此颜色相关变化并不重要)</li>
+</ul>
+<h1 id="font-相关参数说明">Font 相关参数说明</h1>
+<p>为了更好的控制后续透视、随机扭曲，padding等与图像位置相关的变换，渲染得到的文本图像的尺寸相关参数必须要注意。</p>
+<p>注意下图中的offset_y, PIL 的ImageFont api中能直接得到结果图像的高度，但这个高度实测并不准确，很多常见字体(特别是英文类)配置中会额外给上面流出一段空间，也就是offset_y所描述的， offset_x到是通常为0可以忽略掉</p>
+<figure data-type="image" tabindex="1"><img src="https://papercatnku.github.io//post-images/1581520075491.png" alt="" loading="lazy"></figure>
+<p>如下为 可以得到仅包含文本区域的图片的示意代码</p>
+<pre><code>    from PIL import Image, ImageDraw, ImageFont
+    font_fn = './data/fonts/toy/arial.ttf' # any font file path you like
+    temp_txt = 'asdfghjkl'
+    size = 64
+    font = ImageFont.truetype(
+                font=font_fn,
+                size=size,
+                encoding='unic')
+    ascent, descent = font.getmetrics()
+    mask_width, mask_height = font.getsize(text=temp_txt)
+    (width, baseline), (offset_x, offset_y) = font.font.getsize(temp_txt)
+    raw_txt_img = Image.new('RGBA', (mask_width, mask_height-offset_y))
+    draw = ImageDraw.Draw(raw_txt_img)
+    draw.text(xy=(0,-offset_y), text=temp_txt, fill=(255,0,0), font=font)
+    raw_txt_img.save('./test.png')</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Gridea Windows 配置踩坑]]></title>
         <id>https://papercatnku.github.io/post/gridea-windows-pei-zhi-cai-keng</id>
